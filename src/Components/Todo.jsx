@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+import { useDispatch, useSelector } from "react-redux";
 
 function Todo() {
   const style = {
@@ -14,63 +14,48 @@ function Todo() {
   };
 
   const [name, setName] = useState("");
-  const [tasks, setTasks] = useState([
-    { taskId: uuidv4(), name: "clean", completed: false, updating: false },
-    { taskId: uuidv4(), name: "read", completed: true, updating: false },
-    { taskId: uuidv4(), name: "study", completed: false, updating: false },
-  ]);
+  const todoState = useSelector((state) => state.todoState);
+  const dispatch = useDispatch();
 
-  const handleAddTask = (event) => {
+  const handleAddTodo = (event) => {
     event.preventDefault();
-
-    // Add to tasks
-    setTasks([
-      { taskId: uuidv4(), name: name, completed: false, updating: false },
-      ...tasks,
-    ]);
-
-    // Reset name
+    dispatch({ type: "ADD_TODO", payload: name });
     setName("");
   };
 
-  const handleUpdateClick = (taskId) => {
-    setTasks((tasks) =>
-      tasks.map((task) =>
-        task.taskId === taskId ? { ...task, updating: true } : task
-      )
-    );
-  };
+  const handleUpdateClick = (todoId) => {
+    // Only dispatch if not already updating
+    const todo = todoState.todoList.find((todo) => todo.todoId === todoId);
 
-  const handleUpdateEnter = (event, taskId) => {
-    if (event.key === "Enter") {
-      setTasks((tasks) =>
-        tasks.map((task) =>
-          task.taskId === taskId
-            ? { ...task, name: event.target.value, updating: false }
-            : task
-        )
-      );
+    if (!todo.updating) {
+      dispatch({ type: "UPDATING_TODO", payload: todoId });
     }
   };
 
-  const handleDelete = (taskId) => {
-    setTasks((tasks) => tasks.filter((task) => task.taskId !== taskId));
+  const handleUpdateEnter = (event, todoId) => {
+    if (event.key === "Enter") {
+      dispatch({
+        type: "UPDATE_TODO",
+        payload: { todoId: todoId, name: event.target.value },
+      });
+    }
   };
 
-  const handleCheck = (event, taskId) => {
-    setTasks((tasks) =>
-      tasks.map((task) =>
-        task.taskId === taskId
-          ? { ...task, completed: event.target.checked }
-          : task
-      )
-    );
+  const handleToggleCheck = (event, todoId) => {
+    dispatch({
+      type: "TOGGLE_TODO",
+      payload: { todoId: todoId, completed: event.target.checked },
+    });
+  };
+
+  const handleDelete = (todoId) => {
+    dispatch({ type: "DELETE_TODO", payload: todoId });
   };
 
   return (
     <div style={style}>
       <h1>Todo</h1>
-      <form onSubmit={handleAddTask}>
+      <form onSubmit={handleAddTodo}>
         <input
           type="text"
           value={name}
@@ -79,9 +64,9 @@ function Todo() {
         />
       </form>
       <ul style={{ width: "100%", listStyleType: "none" }}>
-        {tasks.map((task) => (
+        {todoState.todoList.map((todo) => (
           <div
-            key={task.taskId}
+            key={todo.todoId}
             style={{
               margin: "5% 0",
               display: "flex",
@@ -99,25 +84,25 @@ function Todo() {
             >
               <input
                 type="checkbox"
-                onChange={(event) => handleCheck(event, task.taskId)}
-                defaultChecked={task.completed}
+                onChange={(event) => handleToggleCheck(event, todo.todoId)}
+                defaultChecked={todo.completed}
               />
 
-              <li onClick={() => handleUpdateClick(task.taskId)}>
-                {task.updating ? (
+              <li onClick={() => handleUpdateClick(todo.todoId)}>
+                {todo.updating ? (
                   <input
                     type="text"
                     autoFocus={true}
-                    defaultValue={task.name}
-                    onKeyDown={(evt) => handleUpdateEnter(evt, task.taskId)}
+                    defaultValue={todo.name}
+                    onKeyDown={(evt) => handleUpdateEnter(evt, todo.todoId)}
                   />
                 ) : (
-                  task.name
+                  todo.name
                 )}
               </li>
             </div>
 
-            <button onClick={() => handleDelete(task.taskId)}>delete</button>
+            <button onClick={() => handleDelete(todo.todoId)}>delete</button>
           </div>
         ))}
       </ul>
