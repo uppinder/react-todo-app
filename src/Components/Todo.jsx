@@ -1,5 +1,12 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  addTodo,
+  deleteTodo,
+  toggleCheck,
+  updateTodo,
+  updatingTodo,
+} from "../Actions";
 
 function Todo() {
   const style = {
@@ -19,7 +26,7 @@ function Todo() {
 
   const handleAddTodo = (event) => {
     event.preventDefault();
-    dispatch({ type: "ADD_TODO", payload: name });
+    dispatch(addTodo(name));
     setName("");
   };
 
@@ -28,28 +35,22 @@ function Todo() {
     const todo = todoState.todoList.find((todo) => todo.todoId === todoId);
 
     if (!todo.updating) {
-      dispatch({ type: "UPDATING_TODO", payload: todoId });
+      dispatch(updatingTodo(todoId));
     }
   };
 
   const handleUpdateEnter = (event, todoId) => {
     if (event.key === "Enter") {
-      dispatch({
-        type: "UPDATE_TODO",
-        payload: { todoId: todoId, name: event.target.value },
-      });
+      dispatch(updateTodo(todoId, event.target.value));
     }
   };
 
   const handleToggleCheck = (event, todoId) => {
-    dispatch({
-      type: "TOGGLE_TODO",
-      payload: { todoId: todoId, completed: event.target.checked },
-    });
+    dispatch(toggleCheck(todoId, event.target.checked));
   };
 
   const handleDelete = (todoId) => {
-    dispatch({ type: "DELETE_TODO", payload: todoId });
+    dispatch(deleteTodo(todoId));
   };
 
   return (
